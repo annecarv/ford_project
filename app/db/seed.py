@@ -1,104 +1,63 @@
-from sqlalchemy.orm import Session
+from datetime import date
 from sqlalchemy.exc import IntegrityError
-from datetime import datetime
-from app.db.session import engine, Base
-from app.db.models import (
-    DimLocations, DimSupplier, DimVehicle, DimPart, DimPurchance, FactWarranty, 
-    PurchanceType
-)
+from sqlalchemy.orm import sessionmaker
+from app.db.session import SessionLocal, engine, Base
+from app.db.models import DimVehicle, DimSupplier, DimPart, DimLocations, DimPurchance, FactWarranty, Propulsion, PurchanceType
 
-Base.metadata.create_all(engine)
-session = Session(bind=engine)
+session = SessionLocal(bind=engine)
+Base.metadata.create_all(bind=engine)
 
-def seed_data(model, data):
+def create_table(data):
     try:
-        if not session.query(model).first(): 
-            session.add_all(data)
-            session.commit()
-            print(f'Dados inseridos na tabela {model.__name__}.')
-        else:
-            print(f'Dados já existentes na tabela {model.__name__}.')
+        session.add_all(data)
+        session.commit()
     except IntegrityError as e:
+        print(e)
         session.rollback()
-        print(f'Erro de integridade ao inserir {model.__name__}: {e}')
-    except Exception as e:
-        session.rollback()
-        print(f'Erro ao inserir {model.__name__}: {e}')
 
-locations = [
-    DimLocations(market="América do Norte", country="EUA", province="Califórnia", city="Los Angeles"),
-    DimLocations(market="América do Norte", country="EUA", province="Nova York", city="Nova York"),
-    DimLocations(market="Europa", country="Alemanha", province="Baviera", city="Munique"),
-    DimLocations(market="Ásia", country="Japão", province="Tóquio", city="Tóquio"),
-]
-seed_data(DimLocations, locations)
+location1 = DimLocations(market="North America", country="USA", province="California", city="Los Angeles")
+location2 = DimLocations(market="Europe", country="Germany", province="Bavaria", city="Munich")
 
-location_ids = {loc.city: loc.location_id for loc in session.query(DimLocation).all()}
+create_table([location1, location2])
 
-suppliers = [
-    DimSupplier(supplier_name="AutoParts Inc.", location_id=1),
-    DimSupplier(supplier_name="Bavaria Motors", location_id=2),
-    DimSupplier(supplier_name="Tokyo Auto Parts", location_id=3),
-    DimSupplier(supplier_name="Global Car Supply", location_id=4),
-]
+supplier1 = DimSupplier(supplier_name="A", location_id=location1.location_id)
+supplier2 = DimSupplier(supplier_name="B", location_id=location2.location_id)
 
-seed_data(DimSupplier, suppliers)
+create_table([supplier1, supplier2])
 
-supplier_ids = {sup.supplier_name: sup.supplier_id for sup in session.query(DimSupplier).all()}
+part1 = DimPart(part_name="Bateria Elétrica", last_id_purchance=1, supplier_id=supplier1.supplier_id)
+part2 = DimPart(part_name="Motor Híbrido", last_id_purchance=2, supplier_id=supplier2.supplier_id)
+
+create_table([part1, part2])
 
 vehicles = [
-    DimVehicle(model="Tesla Model S", prod_date=datetime(2023, 5, 10), year=2023, propulsion=PropulsionType.eletric),
-    DimVehicle(model="BMW X5", prod_date=datetime(2022, 8, 15), year=2022, propulsion=PropulsionType.hybrid),
-    DimVehicle(model="Toyota Corolla", prod_date=datetime(2021, 11, 20), year=2021, propulsion=PropulsionType.gas),
-    DimVehicle(model="Audi e-tron", prod_date=datetime(2024, 1, 5), year=2024, propulsion=PropulsionType.eletric),
-]
-seed_data(DimVehicle, vehicles)
-
-vehicle_ids = {veh.model: veh.vehicle_id for veh in session.query(DimVehicle).all()}
-
-parts = [
-    DimPart(part_name="Bateria Elétrica", supplier_id=1),
-    DimPart(part_name="Motor Híbrido", supplier_id=2),
-    DimPart(part_name="Filtro de Óleo", supplier_id=3),
-    DimPart(part_name="Sistema de Freios", supplier_id=4),
+    DimVehicle(model="Tesla", prod_date=date(2022, 1, 1), year=2022, propulsion='electric'),
+    DimVehicle(model="Toyota Prius", prod_date=date(2022, 6, 1), year=2022, propulsion='hybrid'),
+    DimVehicle(model="Ford Mustang GT", prod_date=date(2021, 1, 1), year=2021, propulsion='gas'),
 ]
 
-seed_data(DimPart, parts)
-
-part_ids = {part.part_name: part.part_id for part in session.query(DimPart).all()}
+create_table(vehicles)
 
 purchances = [
-    DimPurchance(purchance_type=PurchanceType.bulk, last_id_purchase=1, purchance_date=datetime(2023, 6, 1)),
-    DimPurchance(purchance_type=PurchanceType.warranty, last_id_purchase=2, purchance_date=datetime(2022, 9, 10)),
-    DimPurchance(purchance_type=PurchanceType.bulk, last_id_purchase=3, purchance_date=datetime(2021, 12, 15)),
-    DimPurchance(purchance_type=PurchanceType.warranty, last_id_purchase=4, purchance_date=datetime(2024, 2, 20)),
+    DimPurchance(purchance_type='bulk', purchance_date=date(2022, 1, 1), part_id=part1.part_id),
+    DimPurchance(purchance_type='warranty', purchance_date=date(2023, 5, 10), part_id=part2.part_id),
 ]
-seed_data(DimPurchance, purchances)
 
-purchance_ids = {purch.last_id_purchase: purch.purchance_id for purch in session.query(DimPurchance).all()}
+session.add_all(purchances)
+session.commit()
 
-warranties = [
-    FactWarranty(
-        vehicle_id=vehicle_ids["Tesla Model S"],
-        repair_date=datetime(2024, 3, 1),
-        client_comment="Carro parou de funcionar", 
-        tech_comment="Defeito na bateria",
-        part_id=part_ids["Bateria Elétrica"],
-        classifed_failured="Elétrico",
-        location_id=location_ids["Los Angeles"],
-        purchance_id=purchance_ids[1]
-    ),
-    FactWarranty(
-        vehicle_id=vehicle_ids["BMW X5"],
-        repair_date=datetime(2023, 11, 15),
-        client_comment="Ruído estranho no motor", 
-        tech_comment="Falha na bomba de óleo",
-        part_id=part_ids["Motor Híbrido"],
-        classifed_failured="Mecânico",
-        location_id=location_ids["Nova York"],
-        purchance_id=purchance_ids[2]
-    )
-]
-seed_data(FactWarranty, warranties)
+create_table(purchances)
 
-#session.close()
+warranty1 = FactWarranty(
+    vehicle_id=vehicles[0].vehicle_id, repair_date=date(2022, 3, 15), client_comment="Defeito no motor", 
+    tech_comment="Troca do motor", part_id=part1.part_id, classifed_failured="Failure", 
+    location_id=location1.location_id, purchance_id=purchances[0].purchance_id
+)
+
+warranty2 = FactWarranty(
+    vehicle_id=vehicles[1].vehicle_id, repair_date=date(2022, 6, 20), client_comment="Problema na bateria", 
+    tech_comment="Substituição da bateria", part_id=part2.part_id, classifed_failured="Failure", 
+    location_id=location2.location_id, purchance_id=purchances[1].purchance_id
+)
+
+create_table([warranty1, warranty2])

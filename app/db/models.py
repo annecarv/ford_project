@@ -44,8 +44,8 @@ class DimPart(Base):
     last_id_purchance = Column(Integer, ForeignKey('Dim_Purchance.purchance_id'), nullable=True)
 
     purchances = relationship(
-        "DimPurchance",  # Nome da classe DimPurchance como string
-        back_populates="parts",  # Back-reference para DimPurchance
+        "DimPurchance", 
+        back_populates="parts", 
         primaryjoin="DimPart.part_id == DimPurchance.part_id",
 
     )
@@ -76,13 +76,13 @@ class DimPurchance(Base):
     purchance_id = Column(Integer, primary_key=True, unique=True)
     purchance_type = Column(ENUM('bulk', 'warranty', name='purchance_type_t'), nullable=False)
     purchance_date = Column(Date, nullable=False)
-    part_id = Column(Integer, ForeignKey('Dim_Part.part_id'))  # Relacionamento com DimPart
+    part_id = Column(Integer, ForeignKey('Dim_Part.part_id'))  
 
-    # Relacionamento com DimPart
+   
     parts = relationship(
-        "DimPart",  # Usando o nome da classe como string
+        "DimPart",  
         back_populates="purchances", 
-        foreign_keys=[part_id],  # Define a chave estrangeira para a relação
+        foreign_keys=[part_id], 
         remote_side="DimPurchance.part_id"
     )
 

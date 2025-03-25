@@ -1,7 +1,6 @@
 from fastapi import FastAPI
-from .routes import suppliers, transactions
+from app.api.routes import router as api_router
 
-app = FastAPI()
+app = FastAPI(title="API de Veículos")
 
-app.include_router(suppliers.router)
-#app.include_router(transactions.router)
+app.include_router(api_router)

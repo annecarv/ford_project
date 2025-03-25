@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-from app.db.session import Base, session
+from app.db.session import Base, SessionLocal
 import os
 from dotenv import load_dotenv
 import psycopg2
