@@ -88,7 +88,6 @@ class DimPurchance(Base):
 
     last_purchances = relationship("DimPart", back_populates="last_purchances", foreign_keys=[DimPart.last_id_purchance])
 
-
 class FactWarranty(Base):
     __tablename__ = 'Fact_Warranties'
 

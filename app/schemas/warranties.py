@@ -1,28 +1,27 @@
 from pydantic import BaseModel
-from datetime import date
+from datetime import datetime
 from typing import Optional
 
-# Schema para criação de uma nova garantia (usado no POST)
+# POST
 class WarrantyCreate(BaseModel):
-    vehicle_id: int  # Este campo será necessário porque é uma chave estrangeira
-    repair_date: date
+    vehicle_id: int
+    repair_date: datetime
     client_comment: Optional[str] = None
     tech_comment: str
-    part_id: int  # Este campo será necessário porque é uma chave estrangeira
+    part_id: int
     classifed_failured: str
-    location_id: int  # Este campo será necessário porque é uma chave estrangeira
-    purchance_id: int  # Este campo será necessário porque é uma chave estrangeira
+    location_id: int
+    purchance_id: int
 
-# Schema para resposta da API (usado no GET)
+# GET
 class WarrantyOut(WarrantyCreate):
-    claim_key: int  # ID gerado automaticamente após criação
-
+    claim_key: int
     class Config:
-        from_attributes = True  # Permite converter do SQLAlchemy para Pydantic
+        from_attributes = True  #converte do SQLAlchemy para Pydantic
 
-# Schema para atualização parcial da garantia (usado no PUT/PATCH)
+# PUT/PATCH
 class WarrantyUpdate(BaseModel):
-    repair_date: Optional[date] = None
+    repair_date: Optional[datetime] = None
     client_comment: Optional[str] = None
     tech_comment: Optional[str] = None
     classifed_failured: Optional[str] = None
